@@ -59,7 +59,17 @@
       <groupId>ai.timefold.solver</groupId>
       <artifactId>timefold-solver-quarkus-jackson</artifactId>
     </dependency>
-
+    <dependency>
+        <groupId>com.googlecode.json-simple</groupId>
+        <artifactId>json-simple</artifactId>
+        <version>1.1.1</version>
+    </dependency>
+    <!-- Other dependencies -->
+    <dependency>
+        <groupId>javax.ws.rs</groupId>
+        <artifactId>javax.ws.rs-api</artifactId>
+        <version>2.1.1</version>
+    </dependency>
     <!-- Testing -->
     <dependency>
       <groupId>io.quarkus</groupId>
