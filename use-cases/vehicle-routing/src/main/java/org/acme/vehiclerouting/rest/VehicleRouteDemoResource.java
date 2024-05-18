@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.PrimitiveIterator;
 import java.util.Random;
@@ -224,16 +225,56 @@ public class VehicleRouteDemoResource {
                                 .mapToInt(Integer::intValue) // Convert Integer to int
                                 .iterator();
 
-                AtomicLong vehicleSequence = new AtomicLong();
-                Supplier<Vehicle> vehicleSupplier = () -> new Vehicle(
-                                String.valueOf(vehicleSequence.incrementAndGet()),
-                                vehicleCapacity.nextInt(),
-                                new Location(latitudes.remove(0), longitudes.remove(0)),
-                                tomorrowAt(demoData.vehicleStartTime));
+                List<Vehicle> vehicles = new ArrayList<>();
 
-                List<Vehicle> vehicles = Stream.generate(vehicleSupplier)
-                                .limit(demoData.vehicleCount)
-                                .collect(Collectors.toList());
+                for (int i = 1; i < sheet2.size(); i++) { // Skip header row
+                        JSONObject vehicleObject = (JSONObject) sheet2.get(i);
+                        String vehicleId = vehicleObject.get("Vehicles").toString();
+                        int assignedDepot = Integer.parseInt(vehicleObject.get("AssignedDepot").toString());
+                        int capacity = Integer.parseInt(vehicleObject.get("Capacity").toString());
+
+                        Location location;
+                        if (assignedDepot == 0) {
+                                // Find the depot in sheet1 where Type=Depot
+                                JSONObject depot = (JSONObject) sheet1.stream()
+                                                .filter(obj -> "Depot".equals(((JSONObject) obj).get("Type")))
+                                                .findFirst()
+                                                .orElse(null);
+
+                                if (depot != null) {
+                                        double depotLatitude = Double.parseDouble(depot.get("Lat").toString());
+                                        double depotLongitude = Double.parseDouble(depot.get("Long").toString());
+                                        location = new Location(depotLatitude, depotLongitude);
+                                } else {
+                                        // Handle the case where no depot is found
+                                        System.err.println("No depot found in sheet1.");
+                                        continue; // Skip this vehicle
+                                }
+                        } else {
+                                // Find the assigned depot in sheet1
+                                JSONObject depot = (JSONObject) sheet1.stream()
+                                                .filter(obj -> "Depot".equals(((JSONObject) obj).get("Type")) &&
+                                                                Integer.parseInt(((JSONObject) obj).get("Depot")
+                                                                                .toString()) == assignedDepot)
+                                                .findFirst()
+                                                .orElse(null);
+
+                                if (depot != null) {
+                                        double depotLatitude = Double.parseDouble(depot.get("Lat").toString());
+                                        double depotLongitude = Double.parseDouble(depot.get("Long").toString());
+                                        location = new Location(depotLatitude, depotLongitude);
+                                } else {
+                                        // Handle the case where the assigned depot is not found
+                                        System.err.println("Assigned depot not found in sheet1.");
+                                        continue; // Skip this vehicle
+                                }
+                        }
+
+                        // Create the vehicle and add it to the list
+                        Vehicle vehicle = new Vehicle(vehicleId, capacity, location,
+                                        tomorrowAt(demoData.vehicleStartTime));
+                        vehicles.add(vehicle);
+                }
 
                 Supplier<String> nameSupplier = () -> {
                         Function<String[], String> randomStringSelector = strings -> strings[new Random(demoData.seed)
