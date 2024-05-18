@@ -213,8 +213,16 @@ public class VehicleRouteDemoResource {
                                                                                                                 // values
                                 .iterator();
 
-                PrimitiveIterator.OfInt vehicleCapacity = new Random(demoData.seed)
-                                .ints(demoData.minVehicleCapacity, demoData.maxVehicleCapacity + 1).iterator();
+                List<Integer> vehicleCapacities = sheet2.stream()
+                                .mapToInt(obj -> Integer.parseInt(((JSONObject) obj).get("Capacity").toString())) // Extract
+                                                                                                                  // vehicle
+                                                                                                                  // capacities
+                                .boxed() // Convert int to Integer
+                                .collect(Collectors.toList());
+
+                PrimitiveIterator.OfInt vehicleCapacity = vehicleCapacities.stream()
+                                .mapToInt(Integer::intValue) // Convert Integer to int
+                                .iterator();
 
                 AtomicLong vehicleSequence = new AtomicLong();
                 Supplier<Vehicle> vehicleSupplier = () -> new Vehicle(
