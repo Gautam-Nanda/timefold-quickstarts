@@ -16,10 +16,10 @@ import java.util.stream.Stream;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Consumes;
-
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import org.acme.vehiclerouting.domain.Location;
 import org.acme.vehiclerouting.domain.Vehicle;
@@ -42,7 +42,6 @@ import org.json.simple.parser.JSONParser;
 public class VehicleRouteDemoResource {
         public JSONArray sheet1;
         public JSONArray sheet2;
-       
 
         @Operation(summary = "Receive array of JSON data.")
         @POST
@@ -54,7 +53,7 @@ public class VehicleRouteDemoResource {
                         JSONObject obj = (JSONObject) parser.parse(data);
                         this.sheet1 = (JSONArray) parser.parse(obj.get("0").toString());
                         this.sheet2 = (JSONArray) parser.parse(obj.get("1").toString());
-                       
+
                 } catch (Exception e) {
                         e.printStackTrace();
                 }
@@ -71,18 +70,15 @@ public class VehicleRouteDemoResource {
         private static final LocalTime AFTERNOON_WINDOW_END = LocalTime.of(18, 0);
 
         public enum DemoData {
-                PHILADELPHIA(0, 55, 6, LocalTime.of(7, 30),
-                                1, 2, 15, 30,
+                PHILADELPHIA(0, 55, 6, LocalTime.of(7, 30), 1, 50, 15, 30,
                                 new Location(39.7656099067391, -76.83782328143754),
                                 new Location(40.77636644354855, -74.9300739430771)),
-                HARTFORT(1, 50, 6, LocalTime.of(7, 30),
-                                1, 3, 20, 30,
+                HARTFORT(1, 50, 6, LocalTime.of(7, 30), 1, 3, 20, 30,
                                 new Location(41.48366520850297, -73.15901689943055),
                                 new Location(41.99512052869307, -72.25114548877427)),
-                DELHI(3, 50, 6, LocalTime.of(7, 30), 1, 3, 20, 30, new Location(28.474849, 77.058861),
-                                new Location(28.496776, 77.101406)),
-                FIRENZE(2, 77, 6, LocalTime.of(7, 30),
-                                1, 2, 20, 40,
+                DELHI(3, 50, 6, LocalTime.of(7, 30), 1, 3, 20, 30,
+                                new Location(28.474849, 77.058861), new Location(28.496776, 77.101406)),
+                FIRENZE(2, 77, 6, LocalTime.of(7, 30), 1, 2, 20, 40,
                                 new Location(43.751466, 11.177210), new Location(43.809291, 11.290195));
 
                 private long seed;
@@ -103,7 +99,7 @@ public class VehicleRouteDemoResource {
                                 throw new IllegalStateException(
                                                 "minDemand (%s) must be greater than zero.".formatted(minDemand));
                         }
-                       
+
                         if (maxDemand < 1) {
                                 throw new IllegalStateException(
                                                 "maxDemand (%s) must be greater than zero.".formatted(maxDemand));
@@ -176,37 +172,55 @@ public class VehicleRouteDemoResource {
         @Operation(summary = "Find an unsolved demo route plan by ID.")
         @GET
         @Path("/{demoDataId}")
-        public VehicleRoutePlan generate(
+        public Response generate(
                         @Parameter(description = "Unique identifier of the demo data.", required = true) @PathParam("demoDataId") DemoData demoData) {
-                return build(demoData);
+                if (sheet1 == null) {
+                        return Response.status(Response.Status.BAD_REQUEST)
+                                        .entity("No data received. Please upload data first.").build();
+                }
+
+                VehicleRoutePlan plan = build(demoData);
+                return Response.ok(plan).build();
         }
 
         public VehicleRoutePlan build(DemoData demoData) {
-
                 String name = "demo";
 
-                Random random = new Random(demoData.seed);
-                PrimitiveIterator.OfDouble latitudes = random
-                                .doubles(demoData.southWestCorner.getLatitude(), demoData.northEastCorner.getLatitude())
-                                .iterator();
-                 System.out.print(sheet1);
+                // Extract latitudes and longitudes from sheet1
+                List<Double> latitudes = (List<Double>) sheet1.stream()
+                                .filter(obj -> "Customer".equals(((JSONObject) obj).get("Type"))) // Filter by Type =
+                                                                                                  // Customer
+                                .map(obj -> Double.parseDouble(((JSONObject) obj).get("Lat").toString()))
+                                .collect(Collectors.toList());
 
-                PrimitiveIterator.OfDouble longitudes = random
-                                .doubles(demoData.southWestCorner.getLongitude(),
-                                                demoData.northEastCorner.getLongitude())
+                List<Double> longitudes = (List<Double>) sheet1.stream()
+                                .filter(obj -> "Customer".equals(((JSONObject) obj).get("Type"))) // Filter by Type =
+                                                                                                  // Customer
+                                .map(obj -> Double.parseDouble(((JSONObject) obj).get("Long").toString()))
+                                .collect(Collectors.toList());
+
+                // Ensure that there are enough coordinates for visits and vehicles
+                if (latitudes.size() < demoData.visitCount + demoData.vehicleCount
+                                || longitudes.size() < demoData.visitCount + demoData.vehicleCount) {
+                        throw new IllegalStateException("Not enough coordinates provided in the uploaded data.");
+                }
+
+                PrimitiveIterator.OfInt demand = sheet1.stream()
+                                .filter(obj -> "Customer".equals(((JSONObject) obj).get("Type"))) // Filter by Type =
+                                                                                                  // Customer
+                                .mapToInt(obj -> Integer.parseInt(((JSONObject) obj).get("Demand").toString())) // Extract
+                                                                                                                // demand
+                                                                                                                // values
                                 .iterator();
 
-                PrimitiveIterator.OfInt demand = random.ints(demoData.minDemand, demoData.maxDemand + 1)
-                                .iterator();
-                PrimitiveIterator.OfInt vehicleCapacity = random
-                                .ints(demoData.minVehicleCapacity, demoData.maxVehicleCapacity + 1)
-                                .iterator();
+                PrimitiveIterator.OfInt vehicleCapacity = new Random(demoData.seed)
+                                .ints(demoData.minVehicleCapacity, demoData.maxVehicleCapacity + 1).iterator();
 
                 AtomicLong vehicleSequence = new AtomicLong();
                 Supplier<Vehicle> vehicleSupplier = () -> new Vehicle(
                                 String.valueOf(vehicleSequence.incrementAndGet()),
                                 vehicleCapacity.nextInt(),
-                                new Location(latitudes.nextDouble(), longitudes.nextDouble()),
+                                new Location(latitudes.remove(0), longitudes.remove(0)),
                                 tomorrowAt(demoData.vehicleStartTime));
 
                 List<Vehicle> vehicles = Stream.generate(vehicleSupplier)
@@ -214,7 +228,7 @@ public class VehicleRouteDemoResource {
                                 .collect(Collectors.toList());
 
                 Supplier<String> nameSupplier = () -> {
-                        Function<String[], String> randomStringSelector = strings -> strings[random
+                        Function<String[], String> randomStringSelector = strings -> strings[new Random(demoData.seed)
                                         .nextInt(strings.length)];
                         String firstName = randomStringSelector.apply(FIRST_NAMES);
                         String lastName = randomStringSelector.apply(LAST_NAMES);
@@ -223,18 +237,18 @@ public class VehicleRouteDemoResource {
 
                 AtomicLong visitSequence = new AtomicLong();
                 Supplier<Visit> visitSupplier = () -> {
-                        boolean morningTimeWindow = random.nextBoolean();
+                        boolean morningTimeWindow = new Random(demoData.seed).nextBoolean();
 
                         LocalDateTime minStartTime = morningTimeWindow ? tomorrowAt(MORNING_WINDOW_START)
                                         : tomorrowAt(AFTERNOON_WINDOW_START);
                         LocalDateTime maxEndTime = morningTimeWindow ? tomorrowAt(MORNING_WINDOW_END)
                                         : tomorrowAt(AFTERNOON_WINDOW_END);
-                        int serviceDurationMinutes = SERVICE_DURATION_MINUTES[random
+                        int serviceDurationMinutes = SERVICE_DURATION_MINUTES[new Random(demoData.seed)
                                         .nextInt(SERVICE_DURATION_MINUTES.length)];
                         return new Visit(
                                         String.valueOf(visitSequence.incrementAndGet()),
                                         nameSupplier.get(),
-                                        new Location(latitudes.nextDouble(), longitudes.nextDouble()),
+                                        new Location(latitudes.remove(0), longitudes.remove(0)),
                                         demand.nextInt(),
                                         minStartTime,
                                         maxEndTime,

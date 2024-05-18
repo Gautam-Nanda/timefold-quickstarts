@@ -52,7 +52,7 @@
               // Log the object to the console
               console.log(jsonObject);
 
-              //post the JSON object to the server
+              // Post the JSON object to the server
               $.ajax({
                 type: "POST",
                 url: "http://localhost:8080/demo-data/upload",
@@ -60,15 +60,20 @@
                 contentType: "application/json",
                 success: function (data) {
                   console.log(data);
+                  displayNotification('File uploaded successfully!', 'success');
                 },
                 error: function (data) {
                   console.log(data);
+                  displayNotification('Failed to upload file.', 'danger');
                 }
               });
+              // Reload the page
+              location.reload();
             };
 
             reader.onerror = function (ex) {
               console.log(ex);
+              displayNotification('Failed to read the file.', 'danger');
             };
 
             reader.readAsBinaryString(file);
@@ -76,17 +81,62 @@
         };
 
         function handleFileSelect(evt) {
-          var files = evt.target.files; // FileList object
-          var xl2json = new ExcelToJSON();
-          xl2json.parseExcel(files[0]);
+          var file = evt.target.files[0]; // Get the selected file
+          var fileType = file.name.split('.').pop().toLowerCase(); // Get the file extension
+
+          if (fileType === 'xlsx' || fileType === 'xls') {
+            var xl2json = new ExcelToJSON();
+            xl2json.parseExcel(file);
+          } else if (fileType === 'json') {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+              var jsonObject = JSON.parse(e.target.result);
+              console.log(jsonObject);
+
+              // Post the JSON object to the server
+              $.ajax({
+                type: "POST",
+                url: "http://localhost:8080/demo-data/upload",
+                data: JSON.stringify(jsonObject),
+                contentType: "application/json",
+                success: function (data) {
+                  console.log(data);
+                  displayNotification('File uploaded successfully!', 'success');
+                },
+                error: function (data) {
+                  console.log(data);
+                  displayNotification('Failed to upload file.', 'danger');
+                }
+              });
+              // Reload the page
+              location.reload();
+              // location.reload();
+
+            };
+            reader.onerror = function (ex) {
+              console.log(ex);
+              displayNotification('Failed to read the file.', 'danger');
+            };
+            reader.readAsText(file);
+          } else {
+            displayNotification('Unsupported file format. Please upload a JSON or Excel file.', 'warning');
+          }
+        }
+
+        function displayNotification(message, type) {
+          var notificationPanel = document.getElementById('notificationPanel');
+          notificationPanel.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                                            ${message}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                          </div>`;
         }
       </script>
 
       <form enctype="multipart/form-data">
-        <!-- <button class="btn btn-primary" onclick="ExcelRead()">
-      <span class="fas fa-file-excel"></span> Upload Excel File
-    </button> -->
-        <input id="upload" type=file name="files[]" accept=".xlsx,.xls">
+        <label for="upload" class="btn btn-primary">
+          <span class="fas fa-file-upload"></span> Upload JSON or Excel File
+        </label>
+        <input id="upload" type="file" name="files[]" accept=".xlsx,.xls,.json" style="display: none;">
       </form>
       <script>
         document.getElementById('upload').addEventListener('change', handleFileSelect, false);
