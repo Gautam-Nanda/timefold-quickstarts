@@ -284,29 +284,41 @@ public class VehicleRouteDemoResource {
                         return firstName + " " + lastName;
                 };
 
+                List<Visit> visits = new ArrayList<>();
+
                 AtomicLong visitSequence = new AtomicLong();
-                Supplier<Visit> visitSupplier = () -> {
-                        boolean morningTimeWindow = new Random(demoData.seed).nextBoolean();
+                for (Object obj : sheet1) {
+                        JSONObject visitObject = (JSONObject) obj;
+                        if ("Customer".equals(visitObject.get("Type"))) {
+                                // Extract visit information
+                                String visitId = String.valueOf(visitSequence.incrementAndGet());
+                                String namee = visitObject.get("Type").toString();
+                                double latitude = Double.parseDouble(visitObject.get("Lat").toString());
+                                double longitude = Double.parseDouble(visitObject.get("Long").toString());
+                                int demandValue = Integer.parseInt(visitObject.get("Demand").toString());
 
-                        LocalDateTime minStartTime = morningTimeWindow ? tomorrowAt(MORNING_WINDOW_START)
-                                        : tomorrowAt(AFTERNOON_WINDOW_START);
-                        LocalDateTime maxEndTime = morningTimeWindow ? tomorrowAt(MORNING_WINDOW_END)
-                                        : tomorrowAt(AFTERNOON_WINDOW_END);
-                        int serviceDurationMinutes = SERVICE_DURATION_MINUTES[new Random(demoData.seed)
-                                        .nextInt(SERVICE_DURATION_MINUTES.length)];
-                        return new Visit(
-                                        String.valueOf(visitSequence.incrementAndGet()),
-                                        nameSupplier.get(),
-                                        new Location(latitudes.remove(0), longitudes.remove(0)),
-                                        demand.nextInt(),
-                                        minStartTime,
-                                        maxEndTime,
-                                        Duration.ofMinutes(serviceDurationMinutes));
-                };
+                                // Convert "Ready Time" and "Due Time" from seconds to LocalDateTime
+                                long readyTimeSeconds = Long.parseLong(visitObject.get("Ready Time").toString());
+                                long dueTimeSeconds = Long.parseLong(visitObject.get("Due Time").toString());
 
-                List<Visit> visits = Stream.generate(visitSupplier)
-                                .limit(demoData.visitCount)
-                                .collect(Collectors.toList());
+                                LocalDateTime minStartTime = tomorrowAt(LocalTime.ofSecondOfDay(readyTimeSeconds));
+                                LocalDateTime maxEndTime = tomorrowAt(LocalTime.ofSecondOfDay(dueTimeSeconds));
+
+                                int serviceDurationMinutes = SERVICE_DURATION_MINUTES[new Random(demoData.seed)
+                                                .nextInt(SERVICE_DURATION_MINUTES.length)];
+
+                                // Create the visit and add it to the list
+                                Visit visit = new Visit(
+                                                visitId,
+                                                namee,
+                                                new Location(latitude, longitude),
+                                                demandValue,
+                                                minStartTime,
+                                                maxEndTime,
+                                                Duration.ofMinutes(serviceDurationMinutes));
+                                visits.add(visit);
+                        }
+                }
 
                 return new VehicleRoutePlan(name, VehicleRouteDemoResource.findSouthWestCorner(sheet1),
                                 VehicleRouteDemoResource.findNorthEastCorner(sheet1),
