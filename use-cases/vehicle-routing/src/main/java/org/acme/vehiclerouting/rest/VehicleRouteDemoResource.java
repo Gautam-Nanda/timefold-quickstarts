@@ -227,7 +227,7 @@ public class VehicleRouteDemoResource {
 
                 List<Vehicle> vehicles = new ArrayList<>();
 
-                for (int i = 1; i < sheet2.size(); i++) { // Skip header row
+                for (int i = 0; i < sheet2.size(); i++) { // Skip header row
                         JSONObject vehicleObject = (JSONObject) sheet2.get(i);
                         String vehicleId = vehicleObject.get("Vehicles").toString();
                         int assignedDepot = Integer.parseInt(vehicleObject.get("AssignedDepot").toString());
@@ -308,12 +308,49 @@ public class VehicleRouteDemoResource {
                                 .limit(demoData.visitCount)
                                 .collect(Collectors.toList());
 
-                return new VehicleRoutePlan(name, demoData.southWestCorner, demoData.northEastCorner,
+                return new VehicleRoutePlan(name, VehicleRouteDemoResource.findSouthWestCorner(sheet1),
+                                VehicleRouteDemoResource.findNorthEastCorner(sheet1),
                                 tomorrowAt(demoData.vehicleStartTime), tomorrowAt(LocalTime.MIDNIGHT).plusDays(1L),
                                 vehicles, visits);
         }
 
         private static LocalDateTime tomorrowAt(LocalTime time) {
                 return LocalDateTime.of(LocalDate.now().plusDays(1L), time);
+        }
+
+        public static Location findSouthWestCorner(JSONArray sheet1) {
+                double minLat = Double.MAX_VALUE;
+                double minLong = Double.MAX_VALUE;
+
+                for (Object obj : sheet1) {
+                        JSONObject jsonObject = (JSONObject) obj;
+                        double lat = Double.parseDouble(jsonObject.get("Lat").toString());
+                        double lon = Double.parseDouble(jsonObject.get("Long").toString());
+
+                        if (lat < minLat && lon < minLong) {
+                                minLat = lat;
+                                minLong = lon;
+                        }
+                }
+
+                return new Location(minLat, minLong);
+        }
+
+        public static Location findNorthEastCorner(JSONArray sheet1) {
+                double maxLat = Double.MIN_VALUE;
+                double maxLong = Double.MIN_VALUE;
+
+                for (Object obj : sheet1) {
+                        JSONObject jsonObject = (JSONObject) obj;
+                        double lat = Double.parseDouble(jsonObject.get("Lat").toString());
+                        double lon = Double.parseDouble(jsonObject.get("Long").toString());
+
+                        if (lat > maxLat && lon > maxLong) {
+                                maxLat = lat;
+                                maxLong = lon;
+                        }
+                }
+
+                return new Location(maxLat, maxLong);
         }
 }
