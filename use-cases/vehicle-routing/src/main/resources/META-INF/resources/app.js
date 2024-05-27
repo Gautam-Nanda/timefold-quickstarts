@@ -127,6 +127,8 @@ function visitPopupContent(visit) {
     <h6>Available from ${showTimeOnly(visit.minStartTime)} to ${showTimeOnly(
     visit.maxEndTime
   )}.</h6>
+  //show coordinates
+  <h6>Coordinates: ${visit.location[0]}, ${visit.location[1]}</h6>
     ${arrival}`;
 }
 
@@ -640,8 +642,8 @@ function replaceQuickstartTimefoldAutoHeaderFooter() {
     timefoldHeader.append(
       $(`<div class="container-fluid">
         <nav class="navbar sticky-top navbar-expand-lg navbar-dark shadow mb-3">
-          <a class="navbar-brand" href="https://timefold.ai">
-            <img src="/webjars/timefold/img/timefold-logo-horizontal-negative.svg" alt="Timefold logo" width="200">
+          <a class="navbar-brand" href="https://www.streetsurge.in/">
+            <img src="./street.png" alt="Timefold logo" width="200">
           </a>
           <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
