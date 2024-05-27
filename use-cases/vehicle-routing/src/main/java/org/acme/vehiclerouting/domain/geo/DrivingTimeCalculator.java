@@ -43,6 +43,11 @@ public interface DrivingTimeCalculator {
      */
     default void initDrivingTimeMaps(Collection<Location> locations) {
         Map<Location, Map<Location, Long>> drivingTimeMatrix = calculateBulkDrivingTime(locations, locations);
+       //print only time for debugging
+        // drivingTimeMatrix.forEach((location, drivingTimeMap) -> {
+        //     System.out.println("Driving time from " + location + ":");
+        //     drivingTimeMap.forEach((toLocation, drivingTime) -> System.out.println("  " + toLocation + " = " + drivingTime));
+        // });
         locations.forEach(location -> location.setDrivingTimeSeconds(drivingTimeMatrix.get(location)));
     }
 }

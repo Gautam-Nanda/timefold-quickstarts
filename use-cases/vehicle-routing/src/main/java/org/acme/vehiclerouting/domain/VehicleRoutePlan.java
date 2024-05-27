@@ -89,6 +89,7 @@ public class VehicleRoutePlan {
 
         DrivingTimeCalculator drivingTimeCalculator = HaversineDrivingTimeCalculator.getInstance();
         drivingTimeCalculator.initDrivingTimeMaps(locations);
+        // System.out.println(drivingTimeCalculator.initDrivingTimeMaps(locations));
     }
 
     public String getName() {
