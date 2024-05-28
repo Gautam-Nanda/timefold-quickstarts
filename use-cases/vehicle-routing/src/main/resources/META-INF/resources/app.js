@@ -104,7 +104,20 @@ $(document).ready(function () {
 });
 
 function colorByVehicle(vehicle) {
-  return vehicle === null ? null : pickColor("vehicle" + vehicle.id);
+  if (vehicle === null) {
+    return null;
+  } else {
+    return randomColor();
+  }
+}
+
+function randomColor() {
+  const letters = "0123456789ABCDEF";
+  let color = "#";
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
 }
 
 function formatDrivingTime(drivingTimeInSeconds) {
