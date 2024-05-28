@@ -300,8 +300,7 @@ public class VehicleRouteDemoResource {
                 for (Object obj : sheet1) {
                         JSONObject visitObject = (JSONObject) obj;
                         if ("Customer".equals(visitObject.get("Type"))) {
-                                // Extract visit information
-                                // String visitId = String.valueOf(visitSequence.incrementAndGet());
+                                
                                 String visitId = visitObject.get("Location").toString();
                                 String namee = visitObject.get("Type").toString();
                                 double latitude = Double.parseDouble(visitObject.get("Lat").toString());
@@ -331,6 +330,10 @@ public class VehicleRouteDemoResource {
                                 visits.add(visit);
                         }
                 }
+                //use sheet 1 to get start time and end time of vehicle route plan
+               
+                
+                
 
                 return new VehicleRoutePlan(name, VehicleRouteDemoResource.findSouthWestCorner(sheet1),
                                 VehicleRouteDemoResource.findNorthEastCorner(sheet1),
