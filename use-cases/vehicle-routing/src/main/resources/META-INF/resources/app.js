@@ -115,7 +115,7 @@ function formatDrivingTime(drivingTimeInSeconds) {
 
 function homeLocationPopupContent(vehicle) {
   return `<h5>Vehicle ${vehicle.id}</h5>
-Home Location, capacity: ${vehicle.capacity} units.`;
+Home Location, capacity: ${vehicle.capacity} units.,`;
 }
 
 function visitPopupContent(visit) {

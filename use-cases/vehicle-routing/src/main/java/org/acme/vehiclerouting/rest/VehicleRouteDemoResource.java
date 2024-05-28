@@ -64,7 +64,7 @@ public class VehicleRouteDemoResource {
                         "Jay" };
         private static final String[] LAST_NAMES = { "Cole", "Fox", "Green", "Jones", "King", "Li", "Poe", "Rye",
                         "Smith", "Watt" };
-        private static final int[] SERVICE_DURATION_MINUTES = { 10, 20, 30, 40 };
+        private static final int[] SERVICE_DURATION_MINUTES = { 10, 20, 35, 40 };
         private static final LocalTime MORNING_WINDOW_START = LocalTime.of(8, 0);
         private static final LocalTime MORNING_WINDOW_END = LocalTime.of(12, 0);
         private static final LocalTime AFTERNOON_WINDOW_START = LocalTime.of(13, 0);
@@ -188,50 +188,59 @@ public class VehicleRouteDemoResource {
                 String name = "demo";
 
                 // Extract latitudes and longitudes from sheet1
-                List<Double> latitudes = (List<Double>) sheet1.stream()
-                                .filter(obj -> "Customer".equals(((JSONObject) obj).get("Type"))) // Filter by Type =
-                                                                                                  // Customer
-                                .map(obj -> Double.parseDouble(((JSONObject) obj).get("Lat").toString()))
-                                .collect(Collectors.toList());
+                // List<Double> latitudes = (List<Double>) sheet1.stream()
+                // .filter(obj -> "Customer".equals(((JSONObject) obj).get("Type"))) // Filter
+                // by Type =
+                // // Customer
+                // .map(obj -> Double.parseDouble(((JSONObject) obj).get("Lat").toString()))
+                // .collect(Collectors.toList());
 
-                List<Double> longitudes = (List<Double>) sheet1.stream()
-                                .filter(obj -> "Customer".equals(((JSONObject) obj).get("Type"))) // Filter by Type =
-                                                                                                  // Customer
-                                .map(obj -> Double.parseDouble(((JSONObject) obj).get("Long").toString()))
-                                .collect(Collectors.toList());
+                // List<Double> longitudes = (List<Double>) sheet1.stream()
+                // .filter(obj -> "Customer".equals(((JSONObject) obj).get("Type"))) // Filter
+                // by Type =
+                // // Customer
+                // .map(obj -> Double.parseDouble(((JSONObject) obj).get("Long").toString()))
+                // .collect(Collectors.toList());
 
-                // Ensure that there are enough coordinates for visits and vehicles
-                if (latitudes.size() < demoData.visitCount + demoData.vehicleCount
-                                || longitudes.size() < demoData.visitCount + demoData.vehicleCount) {
-                        throw new IllegalStateException("Not enough coordinates provided in the uploaded data.");
-                }
+                // // Ensure that there are enough coordinates for visits and vehicles
+                // if (latitudes.size() < demoData.visitCount + demoData.vehicleCount
+                // || longitudes.size() < demoData.visitCount + demoData.vehicleCount) {
+                // throw new IllegalStateException("Not enough coordinates provided in the
+                // uploaded data.");
+                // }
 
-                PrimitiveIterator.OfInt demand = sheet1.stream()
-                                .filter(obj -> "Customer".equals(((JSONObject) obj).get("Type"))) // Filter by Type =
-                                                                                                  // Customer
-                                .mapToInt(obj -> Integer.parseInt(((JSONObject) obj).get("Demand").toString())) // Extract
-                                                                                                                // demand
-                                                                                                                // values
-                                .iterator();
+                // PrimitiveIterator.OfInt demand = sheet1.stream()
+                // .filter(obj -> "Customer".equals(((JSONObject) obj).get("Type"))) // Filter
+                // by Type =
+                // // Customer
+                // .mapToInt(obj -> Integer.parseInt(((JSONObject)
+                // obj).get("Demand").toString())) // Extract
+                // // demand
+                // // values
+                // .iterator();
 
-                List<Integer> vehicleCapacities = sheet2.stream()
-                                .mapToInt(obj -> Integer.parseInt(((JSONObject) obj).get("Capacity").toString())) // Extract
-                                                                                                                  // vehicle
-                                                                                                                  // capacities
-                                .boxed() // Convert int to Integer
-                                .collect(Collectors.toList());
+                // List<Integer> vehicleCapacities = sheet2.stream()
+                // .mapToInt(obj -> Integer.parseInt(((JSONObject)
+                // obj).get("Capacity").toString())) // Extract
+                // // vehicle
+                // // capacities
+                // .boxed() // Convert int to Integer
+                // .collect(Collectors.toList());
 
-                PrimitiveIterator.OfInt vehicleCapacity = vehicleCapacities.stream()
-                                .mapToInt(Integer::intValue) // Convert Integer to int
-                                .iterator();
+                // PrimitiveIterator.OfInt vehicleCapacity = vehicleCapacities.stream()
+                // .mapToInt(Integer::intValue) // Convert Integer to int
+                // .iterator();
 
                 List<Vehicle> vehicles = new ArrayList<>();
 
-                for (int i = 0; i < sheet2.size(); i++) { // Skip header row
+                for (int i = 0; i < sheet2.size(); i++) {
                         JSONObject vehicleObject = (JSONObject) sheet2.get(i);
                         String vehicleId = vehicleObject.get("Vehicles").toString();
                         int assignedDepot = Integer.parseInt(vehicleObject.get("AssignedDepot").toString());
                         int capacity = Integer.parseInt(vehicleObject.get("Capacity").toString());
+                        long readyTimeSeconds = Long.parseLong(vehicleObject.get("VehicleStartTime").toString());
+                        LocalDateTime startTime = tomorrowAt(LocalTime.ofSecondOfDay(readyTimeSeconds));
+                        System.out.println("Start Time: " + startTime);
 
                         Location location;
                         if (assignedDepot == 0) {
@@ -272,17 +281,18 @@ public class VehicleRouteDemoResource {
 
                         // Create the vehicle and add it to the list
                         Vehicle vehicle = new Vehicle(vehicleId, capacity, location,
-                                        tomorrowAt(demoData.vehicleStartTime));
+                                        startTime);
                         vehicles.add(vehicle);
                 }
 
-                Supplier<String> nameSupplier = () -> {
-                        Function<String[], String> randomStringSelector = strings -> strings[new Random(demoData.seed)
-                                        .nextInt(strings.length)];
-                        String firstName = randomStringSelector.apply(FIRST_NAMES);
-                        String lastName = randomStringSelector.apply(LAST_NAMES);
-                        return firstName + " " + lastName;
-                };
+                // Supplier<String> nameSupplier = () -> {
+                // Function<String[], String> randomStringSelector = strings -> strings[new
+                // Random(demoData.seed)
+                // .nextInt(strings.length)];
+                // String firstName = randomStringSelector.apply(FIRST_NAMES);
+                // String lastName = randomStringSelector.apply(LAST_NAMES);
+                // return firstName + " " + lastName;
+                // };
 
                 List<Visit> visits = new ArrayList<>();
 
@@ -291,7 +301,8 @@ public class VehicleRouteDemoResource {
                         JSONObject visitObject = (JSONObject) obj;
                         if ("Customer".equals(visitObject.get("Type"))) {
                                 // Extract visit information
-                                String visitId = String.valueOf(visitSequence.incrementAndGet());
+                                // String visitId = String.valueOf(visitSequence.incrementAndGet());
+                                String visitId = visitObject.get("Location").toString();
                                 String namee = visitObject.get("Type").toString();
                                 double latitude = Double.parseDouble(visitObject.get("Lat").toString());
                                 double longitude = Double.parseDouble(visitObject.get("Long").toString());
@@ -304,18 +315,19 @@ public class VehicleRouteDemoResource {
                                 LocalDateTime minStartTime = tomorrowAt(LocalTime.ofSecondOfDay(readyTimeSeconds));
                                 LocalDateTime maxEndTime = tomorrowAt(LocalTime.ofSecondOfDay(dueTimeSeconds));
 
-                                int serviceDurationMinutes = SERVICE_DURATION_MINUTES[new Random(demoData.seed)
-                                                .nextInt(SERVICE_DURATION_MINUTES.length)];
-
+                                // Calculate the duration between minStartTime and maxEndTime
+                                Duration serviceDuration = Duration.between(minStartTime, maxEndTime);
+                                
+                                
                                 // Create the visit and add it to the list
                                 Visit visit = new Visit(
-                                                visitId,
-                                                namee,
-                                                new Location(latitude, longitude),
-                                                demandValue,
-                                                minStartTime,
-                                                maxEndTime,
-                                                Duration.ofMinutes(serviceDurationMinutes));
+                                        visitId,
+                                        namee,
+                                        new Location(latitude, longitude),
+                                        demandValue,
+                                        minStartTime,
+                                        maxEndTime,
+                                        serviceDuration);
                                 visits.add(visit);
                         }
                 }
