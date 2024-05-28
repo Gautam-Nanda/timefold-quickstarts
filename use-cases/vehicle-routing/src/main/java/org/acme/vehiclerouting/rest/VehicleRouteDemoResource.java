@@ -187,50 +187,6 @@ public class VehicleRouteDemoResource {
         public VehicleRoutePlan build(DemoData demoData) {
                 String name = "demo";
 
-                // Extract latitudes and longitudes from sheet1
-                // List<Double> latitudes = (List<Double>) sheet1.stream()
-                // .filter(obj -> "Customer".equals(((JSONObject) obj).get("Type"))) // Filter
-                // by Type =
-                // // Customer
-                // .map(obj -> Double.parseDouble(((JSONObject) obj).get("Lat").toString()))
-                // .collect(Collectors.toList());
-
-                // List<Double> longitudes = (List<Double>) sheet1.stream()
-                // .filter(obj -> "Customer".equals(((JSONObject) obj).get("Type"))) // Filter
-                // by Type =
-                // // Customer
-                // .map(obj -> Double.parseDouble(((JSONObject) obj).get("Long").toString()))
-                // .collect(Collectors.toList());
-
-                // // Ensure that there are enough coordinates for visits and vehicles
-                // if (latitudes.size() < demoData.visitCount + demoData.vehicleCount
-                // || longitudes.size() < demoData.visitCount + demoData.vehicleCount) {
-                // throw new IllegalStateException("Not enough coordinates provided in the
-                // uploaded data.");
-                // }
-
-                // PrimitiveIterator.OfInt demand = sheet1.stream()
-                // .filter(obj -> "Customer".equals(((JSONObject) obj).get("Type"))) // Filter
-                // by Type =
-                // // Customer
-                // .mapToInt(obj -> Integer.parseInt(((JSONObject)
-                // obj).get("Demand").toString())) // Extract
-                // // demand
-                // // values
-                // .iterator();
-
-                // List<Integer> vehicleCapacities = sheet2.stream()
-                // .mapToInt(obj -> Integer.parseInt(((JSONObject)
-                // obj).get("Capacity").toString())) // Extract
-                // // vehicle
-                // // capacities
-                // .boxed() // Convert int to Integer
-                // .collect(Collectors.toList());
-
-                // PrimitiveIterator.OfInt vehicleCapacity = vehicleCapacities.stream()
-                // .mapToInt(Integer::intValue) // Convert Integer to int
-                // .iterator();
-
                 List<Vehicle> vehicles = new ArrayList<>();
 
                 for (int i = 0; i < sheet2.size(); i++) {
@@ -302,7 +258,7 @@ public class VehicleRouteDemoResource {
                         if ("Customer".equals(visitObject.get("Type"))) {
                                 
                                 String visitId = visitObject.get("Location").toString();
-                                String namee = visitObject.get("Type").toString();
+                                String namee = visitObject.get("Type").toString()  + visitObject.get("Location").toString();
                                 double latitude = Double.parseDouble(visitObject.get("Lat").toString());
                                 double longitude = Double.parseDouble(visitObject.get("Long").toString());
                                 int demandValue = Integer.parseInt(visitObject.get("Demand").toString());
@@ -330,14 +286,17 @@ public class VehicleRouteDemoResource {
                                 visits.add(visit);
                         }
                 }
-                //use sheet 1 to get start time and end time of vehicle route plan
-               
+                // use sheet1 row 0 to find start time and end time
+                long readyTimeSeconds = Long.parseLong(((JSONObject) sheet1.get(0)).get("Ready Time").toString());
+                long dueTimeSeconds = Long.parseLong(((JSONObject) sheet1.get(0)).get("Due Time").toString());
+                LocalDateTime minStartTime = tomorrowAt(LocalTime.ofSecondOfDay(readyTimeSeconds));
+                LocalDateTime maxEndTime = tomorrowAt(LocalTime.ofSecondOfDay(dueTimeSeconds));
                 
                 
 
                 return new VehicleRoutePlan(name, VehicleRouteDemoResource.findSouthWestCorner(sheet1),
                                 VehicleRouteDemoResource.findNorthEastCorner(sheet1),
-                                tomorrowAt(demoData.vehicleStartTime), tomorrowAt(LocalTime.MIDNIGHT).plusDays(1L),
+                                minStartTime, maxEndTime,
                                 vehicles, visits);
         }
 

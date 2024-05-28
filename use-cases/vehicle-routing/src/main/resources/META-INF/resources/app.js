@@ -648,6 +648,7 @@ function copyTextToClipboard(id) {
   document.body.removeChild(dummy);
 }
 
+
 function replaceQuickstartTimefoldAutoHeaderFooter() {
   const timefoldHeader = $("header#timefold-auto-header");
   if (timefoldHeader != null) {
