@@ -251,14 +251,15 @@ public class VehicleRouteDemoResource {
                 // };
 
                 List<Visit> visits = new ArrayList<>();
-
+                // List<Double> lat = new ArrayList<>();
                 AtomicLong visitSequence = new AtomicLong();
                 for (Object obj : sheet1) {
                         JSONObject visitObject = (JSONObject) obj;
                         if ("Customer".equals(visitObject.get("Type"))) {
-                                
+
                                 String visitId = visitObject.get("Location").toString();
-                                String namee = visitObject.get("Type").toString()  + visitObject.get("Location").toString();
+                                String namee = visitObject.get("Type").toString()
+                                                + visitObject.get("Location").toString();
                                 double latitude = Double.parseDouble(visitObject.get("Lat").toString());
                                 double longitude = Double.parseDouble(visitObject.get("Long").toString());
                                 int demandValue = Integer.parseInt(visitObject.get("Demand").toString());
@@ -272,27 +273,26 @@ public class VehicleRouteDemoResource {
 
                                 // Calculate the duration between minStartTime and maxEndTime
                                 Duration serviceDuration = Duration.between(minStartTime, maxEndTime);
-                                
-                                
+                                // lat.add(latitude);
+
                                 // Create the visit and add it to the list
                                 Visit visit = new Visit(
-                                        visitId,
-                                        namee,
-                                        new Location(latitude, longitude),
-                                        demandValue,
-                                        minStartTime,
-                                        maxEndTime,
-                                        serviceDuration);
+                                                visitId,
+                                                namee,
+                                                new Location(latitude, longitude),
+                                                demandValue,
+                                                minStartTime,
+                                                maxEndTime,
+                                                serviceDuration);
                                 visits.add(visit);
                         }
                 }
+                // System.out.println(lat);
                 // use sheet1 row 0 to find start time and end time
                 long readyTimeSeconds = Long.parseLong(((JSONObject) sheet1.get(0)).get("Ready Time").toString());
                 long dueTimeSeconds = Long.parseLong(((JSONObject) sheet1.get(0)).get("Due Time").toString());
                 LocalDateTime minStartTime = tomorrowAt(LocalTime.ofSecondOfDay(readyTimeSeconds));
                 LocalDateTime maxEndTime = tomorrowAt(LocalTime.ofSecondOfDay(dueTimeSeconds));
-                
-                
 
                 return new VehicleRoutePlan(name, VehicleRouteDemoResource.findSouthWestCorner(sheet1),
                                 VehicleRouteDemoResource.findNorthEastCorner(sheet1),
