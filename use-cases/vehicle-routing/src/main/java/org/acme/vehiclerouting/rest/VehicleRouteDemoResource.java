@@ -192,51 +192,33 @@ public class VehicleRouteDemoResource {
                         String vehicleId = vehicleObject.get("Vehicles").toString();
                         int assignedDepot = Integer.parseInt(vehicleObject.get("AssignedDepot").toString());
                         int capacity = Integer.parseInt(vehicleObject.get("Capacity").toString());
-                        long readyTimeSeconds = Long.parseLong(vehicleObject.get("VehicleStartTime").toString());
-                        LocalDateTime startTime = tomorrowAt(LocalTime.ofSecondOfDay(readyTimeSeconds));
+                        Location location = null;
+                        LocalDateTime startTime = null;
 
-                        Location location;
-                        if (assignedDepot == 0) {
-                                // Find the depot in sheet1 where Type=Depot
-                                JSONObject depot = (JSONObject) sheet1.stream()
-                                                .filter(obj -> "Depot".equals(((JSONObject) obj).get("Type")))
-                                                .findFirst()
-                                                .orElse(null);
-
-                                if (depot != null) {
+                        // Iterate over sheet1 to find the same "Location" as "assignedDepot"
+                        for (Object obj : sheet1) {
+                                JSONObject depot = (JSONObject) obj;
+                                int locationId = Integer.parseInt(depot.get("Location").toString());
+                                if (locationId == assignedDepot) {
                                         double depotLatitude = Double.parseDouble(depot.get("Lat").toString());
                                         double depotLongitude = Double.parseDouble(depot.get("Long").toString());
-                                        int locationid = Integer.parseInt(depot.get("Location").toString());
-                                        location = new Location(depotLatitude, depotLongitude, locationid);
-                                } else {
-                                        // Handle the case where no depot is found
-                                        System.err.println("No depot found in sheet1.");
-                                        continue; // Skip this vehicle
-                                }
-                        } else {
-                                // Find the assigned depot in sheet1
-                                JSONObject depot = (JSONObject) sheet1.stream()
-                                                .filter(obj -> "Depot".equals(((JSONObject) obj).get("Type")) &&
-                                                                Integer.parseInt(((JSONObject) obj).get("Depot")
-                                                                                .toString()) == assignedDepot)
-                                                .findFirst()
-                                                .orElse(null);
+                                        location = new Location(depotLatitude, depotLongitude, locationId);
 
-                                if (depot != null) {
-                                        double depotLatitude = Double.parseDouble(depot.get("Lat").toString());
-                                        double depotLongitude = Double.parseDouble(depot.get("Long").toString());
-                                        int locationid = Integer.parseInt(depot.get("Location").toString());
-                                        location = new Location(depotLatitude, depotLongitude, locationid);
-                                } else {
-                                        // Handle the case where the assigned depot is not found
-                                        System.err.println("Assigned depot not found in sheet1.");
-                                        continue; // Skip this vehicle
+                                        long readyTimeSeconds = Long.parseLong(depot.get("Ready Time").toString());
+                                        startTime = tomorrowAt(LocalTime.ofSecondOfDay(readyTimeSeconds));
+
+                                        break;
                                 }
                         }
 
+                        if (location == null || startTime == null) {
+                                // Handle the case where the assigned depot or ready time is not found
+                                System.err.println("Assigned depot or ready time not found in sheet1.");
+                                continue; // Skip this vehicle
+                        }
+
                         // Create the vehicle and add it to the list
-                        Vehicle vehicle = new Vehicle(vehicleId, capacity, location,
-                                        startTime);
+                        Vehicle vehicle = new Vehicle(vehicleId, capacity, location, startTime);
                         vehicles.add(vehicle);
                 }
 
