@@ -21,6 +21,7 @@ public class VehicleRoutingSolverException extends RuntimeException {
     }
 
     public String getJobId() {
+        // System.out.println("Job ID: " + jobId);
         return jobId;
     }
 

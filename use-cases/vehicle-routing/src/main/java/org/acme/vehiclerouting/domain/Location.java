@@ -61,7 +61,6 @@ public class Location {
         if (drivingTime == null) {
             return 0; 
         }
-        System.out.println(drivingTime);
         return drivingTime.longValue();
     }
 

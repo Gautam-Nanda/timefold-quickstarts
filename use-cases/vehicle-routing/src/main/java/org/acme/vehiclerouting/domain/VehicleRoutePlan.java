@@ -13,11 +13,15 @@ import ai.timefold.solver.core.api.domain.valuerange.ValueRangeProvider;
 import ai.timefold.solver.core.api.score.buildin.hardsoftlong.HardSoftLongScore;
 import ai.timefold.solver.core.api.solver.SolverStatus;
 
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
 import org.acme.vehiclerouting.domain.geo.DrivingTimeCalculator;
-import org.acme.vehiclerouting.domain.geo.HaversineDrivingTimeCalculator;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -94,9 +98,14 @@ public class VehicleRoutePlan {
                 vehicles.stream().map(Vehicle::getHomeLocation),
                 visits.stream().map(Visit::getLocation)).toList();
 
-        DrivingTimeCalculator drivingTimeCalculator = HaversineDrivingTimeCalculator.getInstance();
+        DrivingTimeCalculator drivingTimeCalculator = new DrivingTimeCalculator() {
+            @Override
+            public long calculateDrivingTime(Location from, Location to) {
+                // Implementation here
+                return 0;
+            }
+        };
         drivingTimeCalculator.initDrivingTimeMaps(locations, sheet3);
-
     }
 
     public String getName() {
