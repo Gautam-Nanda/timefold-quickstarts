@@ -1,5 +1,6 @@
 package org.acme.vehiclerouting.domain;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -9,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonFormat(shape = JsonFormat.Shape.ARRAY)
 public class Location {
-
+    private int id;
     private double latitude;
     private double longitude;
 
@@ -17,13 +18,19 @@ public class Location {
     private Map<Location, Long> drivingTimeSeconds;
 
     @JsonCreator
-    public Location(@JsonProperty("latitude") double latitude, @JsonProperty("longitude") double longitude) {
+    public Location( @JsonProperty("latitude") double latitude, @JsonProperty("longitude") double longitude, @JsonProperty("id") int id) {
         this.latitude = latitude;
         this.longitude = longitude;
+        this.id = id;
+        this.drivingTimeSeconds = new HashMap<>();
     }
 
     public double getLatitude() {
         return latitude;
+    }
+
+    public int getLocationId() {
+        return id;
     }
 
     public double getLongitude() {
@@ -50,12 +57,17 @@ public class Location {
      * @return driving time in seconds
      */
     public long getDrivingTimeTo(Location location) {
-        return drivingTimeSeconds.get(location);
+        Long drivingTime = drivingTimeSeconds.get(location);
+        if (drivingTime == null) {
+            return 0; 
+        }
+        System.out.println(drivingTime);
+        return drivingTime.longValue();
     }
 
     @Override
     public String toString() {
-        return latitude + "," + longitude;
+        return id + "," + latitude + "," + longitude;
     }
 
 }

@@ -5,7 +5,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.PrimitiveIterator;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
@@ -43,6 +45,7 @@ import org.json.simple.parser.JSONParser;
 public class VehicleRouteDemoResource {
         public JSONArray sheet1;
         public JSONArray sheet2;
+        public JSONArray sheet3;
 
         @Operation(summary = "Receive array of JSON data.")
         @POST
@@ -54,6 +57,8 @@ public class VehicleRouteDemoResource {
                         JSONObject obj = (JSONObject) parser.parse(data);
                         this.sheet1 = (JSONArray) parser.parse(obj.get("0").toString());
                         this.sheet2 = (JSONArray) parser.parse(obj.get("1").toString());
+                        this.sheet3 = (JSONArray) parser.parse(obj.get("2").toString());
+                        // System.out.println(sheet3);
 
                 } catch (Exception e) {
                         e.printStackTrace();
@@ -72,15 +77,8 @@ public class VehicleRouteDemoResource {
 
         public enum DemoData {
                 PHILADELPHIA(0, 55, 6, LocalTime.of(7, 30), 1, 50, 15, 30,
-                                new Location(39.7656099067391, -76.83782328143754),
-                                new Location(40.77636644354855, -74.9300739430771)),
-                HARTFORT(1, 50, 6, LocalTime.of(7, 30), 1, 3, 20, 30,
-                                new Location(41.48366520850297, -73.15901689943055),
-                                new Location(41.99512052869307, -72.25114548877427)),
-                DELHI(3, 50, 6, LocalTime.of(7, 30), 1, 3, 20, 30,
-                                new Location(28.474849, 77.058861), new Location(28.496776, 77.101406)),
-                FIRENZE(2, 77, 6, LocalTime.of(7, 30), 1, 2, 20, 40,
-                                new Location(43.751466, 11.177210), new Location(43.809291, 11.290195));
+                                new Location(39.7656099067391, -76.83782328143754, -2),
+                                new Location(40.77636644354855, -74.9300739430771, -3));
 
                 private long seed;
                 private int visitCount;
@@ -126,7 +124,7 @@ public class VehicleRouteDemoResource {
                         }
                         if (visitCount < 1) {
                                 throw new IllegalStateException(
-                                                "Number of visitCount (%s) must be greater than zero."
+                                                "Number of visitCount (%cs) must be greater than zero."
                                                                 .formatted(visitCount));
                         }
                         if (vehicleCount < 1) {
@@ -196,7 +194,6 @@ public class VehicleRouteDemoResource {
                         int capacity = Integer.parseInt(vehicleObject.get("Capacity").toString());
                         long readyTimeSeconds = Long.parseLong(vehicleObject.get("VehicleStartTime").toString());
                         LocalDateTime startTime = tomorrowAt(LocalTime.ofSecondOfDay(readyTimeSeconds));
-                        System.out.println("Start Time: " + startTime);
 
                         Location location;
                         if (assignedDepot == 0) {
@@ -209,7 +206,8 @@ public class VehicleRouteDemoResource {
                                 if (depot != null) {
                                         double depotLatitude = Double.parseDouble(depot.get("Lat").toString());
                                         double depotLongitude = Double.parseDouble(depot.get("Long").toString());
-                                        location = new Location(depotLatitude, depotLongitude);
+                                        int locationid = Integer.parseInt(depot.get("Location").toString());
+                                        location = new Location(depotLatitude, depotLongitude, locationid);
                                 } else {
                                         // Handle the case where no depot is found
                                         System.err.println("No depot found in sheet1.");
@@ -227,7 +225,8 @@ public class VehicleRouteDemoResource {
                                 if (depot != null) {
                                         double depotLatitude = Double.parseDouble(depot.get("Lat").toString());
                                         double depotLongitude = Double.parseDouble(depot.get("Long").toString());
-                                        location = new Location(depotLatitude, depotLongitude);
+                                        int locationid = Integer.parseInt(depot.get("Location").toString());
+                                        location = new Location(depotLatitude, depotLongitude, locationid);
                                 } else {
                                         // Handle the case where the assigned depot is not found
                                         System.err.println("Assigned depot not found in sheet1.");
@@ -240,15 +239,6 @@ public class VehicleRouteDemoResource {
                                         startTime);
                         vehicles.add(vehicle);
                 }
-
-                // Supplier<String> nameSupplier = () -> {
-                // Function<String[], String> randomStringSelector = strings -> strings[new
-                // Random(demoData.seed)
-                // .nextInt(strings.length)];
-                // String firstName = randomStringSelector.apply(FIRST_NAMES);
-                // String lastName = randomStringSelector.apply(LAST_NAMES);
-                // return firstName + " " + lastName;
-                // };
 
                 List<Visit> visits = new ArrayList<>();
                 // List<Double> lat = new ArrayList<>();
@@ -274,12 +264,12 @@ public class VehicleRouteDemoResource {
                                 // Calculate the duration between minStartTime and maxEndTime
                                 Duration serviceDuration = Duration.between(minStartTime, maxEndTime);
                                 // lat.add(latitude);
-
+                                int locationid = Integer.parseInt(visitObject.get("Location").toString());
                                 // Create the visit and add it to the list
                                 Visit visit = new Visit(
                                                 visitId,
                                                 namee,
-                                                new Location(latitude, longitude),
+                                                new Location(latitude, longitude, locationid),
                                                 demandValue,
                                                 minStartTime,
                                                 maxEndTime,
@@ -293,11 +283,17 @@ public class VehicleRouteDemoResource {
                 long dueTimeSeconds = Long.parseLong(((JSONObject) sheet1.get(0)).get("Due Time").toString());
                 LocalDateTime minStartTime = tomorrowAt(LocalTime.ofSecondOfDay(readyTimeSeconds));
                 LocalDateTime maxEndTime = tomorrowAt(LocalTime.ofSecondOfDay(dueTimeSeconds));
+                List<Map<String, Object>> list = new ArrayList<>();
 
+                for (Object obj : sheet3) {
+                        JSONObject jsonObject = (JSONObject) obj;
+                        Map<String, Object> map = new HashMap<>(jsonObject);
+                        list.add(map);
+                }
                 return new VehicleRoutePlan(name, VehicleRouteDemoResource.findSouthWestCorner(sheet1),
                                 VehicleRouteDemoResource.findNorthEastCorner(sheet1),
                                 minStartTime, maxEndTime,
-                                vehicles, visits);
+                                vehicles, visits, list);
         }
 
         private static LocalDateTime tomorrowAt(LocalTime time) {
@@ -319,7 +315,7 @@ public class VehicleRouteDemoResource {
                         }
                 }
 
-                return new Location(minLat, minLong);
+                return new Location(minLat, minLong, -1);
         }
 
         public static Location findNorthEastCorner(JSONArray sheet1) {
@@ -337,6 +333,6 @@ public class VehicleRouteDemoResource {
                         }
                 }
 
-                return new Location(maxLat, maxLong);
+                return new Location(maxLat, maxLong, 0);
         }
 }

@@ -2,6 +2,7 @@ package org.acme.vehiclerouting.domain;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import ai.timefold.solver.core.api.domain.solution.PlanningEntityCollectionProperty;
@@ -14,7 +15,9 @@ import ai.timefold.solver.core.api.solver.SolverStatus;
 
 import org.acme.vehiclerouting.domain.geo.DrivingTimeCalculator;
 import org.acme.vehiclerouting.domain.geo.HaversineDrivingTimeCalculator;
-
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -55,6 +58,7 @@ public class VehicleRoutePlan {
     private HardSoftLongScore score;
 
     private SolverStatus solverStatus;
+    public List<Map<String, Object>> sheet3;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String scoreExplanation;
@@ -75,7 +79,9 @@ public class VehicleRoutePlan {
             @JsonProperty("startDateTime") LocalDateTime startDateTime,
             @JsonProperty("endDateTime") LocalDateTime endDateTime,
             @JsonProperty("vehicles") List<Vehicle> vehicles,
-            @JsonProperty("visits") List<Visit> visits) {
+            @JsonProperty("visits") List<Visit> visits,
+            @JsonProperty("sheet3") List<Map<String, Object>> sheet3
+            ) {
         this.name = name;
         this.southWestCorner = southWestCorner;
         this.northEastCorner = northEastCorner;
@@ -83,13 +89,14 @@ public class VehicleRoutePlan {
         this.endDateTime = endDateTime;
         this.vehicles = vehicles;
         this.visits = visits;
+        this.sheet3 = sheet3;
         List<Location> locations = Stream.concat(
                 vehicles.stream().map(Vehicle::getHomeLocation),
                 visits.stream().map(Visit::getLocation)).toList();
 
         DrivingTimeCalculator drivingTimeCalculator = HaversineDrivingTimeCalculator.getInstance();
-        drivingTimeCalculator.initDrivingTimeMaps(locations);
-        // System.out.println(drivingTimeCalculator.initDrivingTimeMaps(locations));
+        drivingTimeCalculator.initDrivingTimeMaps(locations, sheet3);
+
     }
 
     public String getName() {
