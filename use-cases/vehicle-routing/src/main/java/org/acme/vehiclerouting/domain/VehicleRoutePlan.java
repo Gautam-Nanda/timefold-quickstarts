@@ -97,7 +97,7 @@ public class VehicleRoutePlan {
         List<Location> locations = Stream.concat(
                 vehicles.stream().map(Vehicle::getHomeLocation),
                 visits.stream().map(Visit::getLocation)).toList();
-
+                System.out.println(locations);
         DrivingTimeCalculator drivingTimeCalculator = new DrivingTimeCalculator() {
             @Override
             public long calculateDrivingTime(Location from, Location to) {

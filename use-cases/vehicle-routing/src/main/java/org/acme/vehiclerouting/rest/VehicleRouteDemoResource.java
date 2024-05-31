@@ -230,8 +230,7 @@ public class VehicleRouteDemoResource {
                         if ("Customer".equals(visitObject.get("Type"))) {
 
                                 String visitId = visitObject.get("Location").toString();
-                                String namee = visitObject.get("Type").toString()
-                                                + visitObject.get("Location").toString();
+                                String namee = visitObject.get("Name").toString();
                                 double latitude = Double.parseDouble(visitObject.get("Lat").toString());
                                 double longitude = Double.parseDouble(visitObject.get("Long").toString());
                                 int demandValue = Integer.parseInt(visitObject.get("Demand").toString());
@@ -242,10 +241,9 @@ public class VehicleRouteDemoResource {
 
                                 LocalDateTime minStartTime = tomorrowAt(LocalTime.ofSecondOfDay(readyTimeSeconds));
                                 LocalDateTime maxEndTime = tomorrowAt(LocalTime.ofSecondOfDay(dueTimeSeconds));
+                                long serviceDuration = Long.parseLong(visitObject.get("serviceDuration").toString());
+                                Duration duration = Duration.ofSeconds(serviceDuration);
 
-                                // Calculate the duration between minStartTime and maxEndTime
-                                Duration serviceDuration = Duration.between(minStartTime, maxEndTime);
-                                // lat.add(latitude);
                                 int locationid = Integer.parseInt(visitObject.get("Location").toString());
                                 // Create the visit and add it to the list
                                 Visit visit = new Visit(
@@ -255,11 +253,11 @@ public class VehicleRouteDemoResource {
                                                 demandValue,
                                                 minStartTime,
                                                 maxEndTime,
-                                                serviceDuration);
+                                                duration);
                                 visits.add(visit);
                         }
                 }
-                // System.out.println(lat);
+
                 // use sheet1 row 0 to find start time and end time
                 long readyTimeSeconds = Long.parseLong(((JSONObject) sheet1.get(0)).get("Ready Time").toString());
                 long dueTimeSeconds = Long.parseLong(((JSONObject) sheet1.get(0)).get("Due Time").toString());

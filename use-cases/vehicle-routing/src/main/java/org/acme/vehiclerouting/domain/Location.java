@@ -59,7 +59,7 @@ public class Location {
     public long getDrivingTimeTo(Location location) {
         Long drivingTime = drivingTimeSeconds.get(location);
         if (drivingTime == null) {
-            return 0; 
+            return 100; 
         }
         return drivingTime.longValue();
     }

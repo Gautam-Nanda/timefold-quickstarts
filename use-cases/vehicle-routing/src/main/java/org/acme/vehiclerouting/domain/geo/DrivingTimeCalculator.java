@@ -85,5 +85,8 @@ public interface DrivingTimeCalculator {
 
         // Assigning the calculated driving time maps to each location
         locationById.values().forEach(location -> location.setDrivingTimeSeconds(drivingTimeMatrix.get(location)));
+        // System.out.println(drivingTimeMatrix);
+
+        
     }
 }
