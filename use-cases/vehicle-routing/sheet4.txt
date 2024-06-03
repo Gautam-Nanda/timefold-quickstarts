@@ -1,0 +1,1 @@
+[{"Type":"SOFT","Constraint":"vehicleCapacity"},{"Type":"HARD","Constraint":"serviceFinishedAfterMaxEndTime"},{"Type":"SOFT","Constraint":"minimizeTravelTime"}]

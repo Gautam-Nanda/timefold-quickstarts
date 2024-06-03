@@ -16,6 +16,8 @@ import org.acme.vehiclerouting.domain.Vehicle;
 import org.acme.vehiclerouting.solver.justifications.MinimizeTravelTimeJustification;
 import org.acme.vehiclerouting.solver.justifications.ServiceFinishedAfterMaxEndTimeJustification;
 import org.acme.vehiclerouting.solver.justifications.VehicleCapacityJustification;
+import org.acme.vehiclerouting.solver.justifications.VehicleCapacityJustification;
+
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
@@ -27,6 +29,11 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class VehicleRoutingConstraintProvider implements ConstraintProvider {
 
@@ -36,11 +43,39 @@ public class VehicleRoutingConstraintProvider implements ConstraintProvider {
 
         @Override
         public Constraint[] defineConstraints(ConstraintFactory factory) {
-                // System.out.println("HELLLLO");
+                String vc = "HARD", sfme = "HARD", mtt = "SOFT";
+                try {
+                        String currentDir = System.getProperty("user.dir");
+                        String fileDir = currentDir + "\\src\\main\\java\\org\\acme\\vehiclerouting\\solver";
+                        String content = new String(Files.readAllBytes(Paths.get(fileDir + "\\sheet4.txt")));
+
+                        JSONParser parser = new JSONParser();
+                        JSONArray jsonArray = (JSONArray) parser.parse(content);
+                        for (Object obj : jsonArray) {
+                                JSONObject jsonObject = (JSONObject) obj;
+                                String type = (String) jsonObject.get("Type");
+                                String constraint = (String) jsonObject.get("Constraint");
+
+                                switch (constraint) {
+                                        case "vehicleCapacity":
+                                                vc = type;
+                                                break;
+                                        case "serviceFinishedAfterMaxEndTime":
+                                                sfme = type;
+                                                break;
+                                        case "minimizeTravelTime":
+                                                mtt = type;
+                                                break;
+                                }
+                        }
+                } catch (IOException | ParseException e) {
+                        e.printStackTrace();
+                }
+                // System.out.println(vc + " " + sfme + " " + mtt);
                 return new Constraint[] {
-                                vehicleCapacity(factory),
-                                serviceFinishedAfterMaxEndTime(factory),
-                                minimizeTravelTime(factory)
+                                vehicleCapacity(factory, vc),
+                                serviceFinishedAfterMaxEndTime(factory, sfme),
+                                minimizeTravelTime(factory, mtt)
                 };
         }
 
@@ -48,10 +83,13 @@ public class VehicleRoutingConstraintProvider implements ConstraintProvider {
         // Hard constraints
         // ************************************************************************
 
-        protected Constraint vehicleCapacity(ConstraintFactory factory) {
+        public Constraint vehicleCapacity(ConstraintFactory factory, String type) {
+                System.out.println(type);
+                System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAA");
                 return factory.forEach(Vehicle.class)
                                 .filter(vehicle -> vehicle.getTotalDemand() > vehicle.getCapacity())
-                                .penalizeLong(HardSoftLongScore.ONE_HARD,
+                                .penalizeLong(type.equals("HARD") ? HardSoftLongScore.ONE_HARD
+                                                : HardSoftLongScore.ONE_SOFT,
                                                 vehicle -> vehicle.getTotalDemand() - vehicle.getCapacity())
                                 .justifyWith((vehicle, score) -> new VehicleCapacityJustification(vehicle.getId(),
                                                 vehicle.getTotalDemand(),
@@ -59,10 +97,11 @@ public class VehicleRoutingConstraintProvider implements ConstraintProvider {
                                 .asConstraint(VEHICLE_CAPACITY);
         }
 
-        protected Constraint serviceFinishedAfterMaxEndTime(ConstraintFactory factory) {
+        public Constraint serviceFinishedAfterMaxEndTime(ConstraintFactory factory, String type) {
                 return factory.forEach(Visit.class)
                                 .filter(Visit::isServiceFinishedAfterMaxEndTime)
-                                .penalizeLong(HardSoftLongScore.ONE_HARD,
+                                .penalizeLong(type.equals("HARD") ? HardSoftLongScore.ONE_HARD
+                                                : HardSoftLongScore.ONE_SOFT,
                                                 Visit::getServiceFinishedDelayInMinutes)
                                 .justifyWith((visit, score) -> new ServiceFinishedAfterMaxEndTimeJustification(
                                                 visit.getId(),
@@ -74,9 +113,10 @@ public class VehicleRoutingConstraintProvider implements ConstraintProvider {
         // Soft constraints
         // ************************************************************************
 
-        protected Constraint minimizeTravelTime(ConstraintFactory factory) {
+        public Constraint minimizeTravelTime(ConstraintFactory factory, String type) {
                 return factory.forEach(Vehicle.class)
-                                .penalizeLong(HardSoftLongScore.ONE_SOFT,
+                                .penalizeLong(type.equals("HARD") ? HardSoftLongScore.ONE_HARD
+                                                : HardSoftLongScore.ONE_SOFT,
                                                 Vehicle::getTotalDrivingTimeSeconds)
                                 .justifyWith((vehicle, score) -> new MinimizeTravelTimeJustification(vehicle.getId(),
                                                 vehicle.getTotalDrivingTimeSeconds()))

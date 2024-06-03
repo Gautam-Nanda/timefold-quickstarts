@@ -28,6 +28,7 @@ import org.acme.vehiclerouting.domain.Location;
 import org.acme.vehiclerouting.domain.Vehicle;
 import org.acme.vehiclerouting.domain.VehicleRoutePlan;
 import org.acme.vehiclerouting.domain.Visit;
+import org.acme.vehiclerouting.solver.VehicleRoutingConstraintProvider;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
@@ -39,6 +40,10 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 
 @Tag(name = "Demo data", description = "Timefold-provided demo vehicle routing data.")
 @Path("demo-data")
@@ -46,6 +51,7 @@ public class VehicleRouteDemoResource {
         public JSONArray sheet1;
         public JSONArray sheet2;
         public JSONArray sheet3;
+        public JSONArray sheet4;
 
         @Operation(summary = "Receive array of JSON data.")
         @POST
@@ -58,8 +64,17 @@ public class VehicleRouteDemoResource {
                         this.sheet1 = (JSONArray) parser.parse(obj.get("0").toString());
                         this.sheet2 = (JSONArray) parser.parse(obj.get("1").toString());
                         this.sheet3 = (JSONArray) parser.parse(obj.get("2").toString());
-                        // System.out.println(sheet3);
+                        this.sheet4 = (JSONArray) parser.parse(obj.get("3").toString());
 
+                        // Write sheet4 data to a text file
+                        String currentDir = System.getProperty("user.dir");
+                        String fileDir = currentDir + "\\src\\main\\java\\org\\acme\\vehiclerouting\\solver";
+
+                        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileDir + "\\sheet4.txt"))) {
+                                writer.write(this.sheet4.toJSONString());
+                        } catch (IOException e) {
+                                e.printStackTrace();
+                        }
                 } catch (Exception e) {
                         e.printStackTrace();
                 }
@@ -67,7 +82,7 @@ public class VehicleRouteDemoResource {
 
         public enum DemoData {
                 Delhi;
-                                
+
         }
 
         @APIResponses(value = {
@@ -98,7 +113,6 @@ public class VehicleRouteDemoResource {
                 String name = "demo";
 
                 List<Vehicle> vehicles = new ArrayList<>();
-
                 for (int i = 0; i < sheet2.size(); i++) {
                         JSONObject vehicleObject = (JSONObject) sheet2.get(i);
                         String vehicleId = vehicleObject.get("Vehicles").toString();
