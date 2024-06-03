@@ -65,97 +65,9 @@ public class VehicleRouteDemoResource {
                 }
         }
 
-        private static final String[] FIRST_NAMES = { "Amy", "Beth", "Chad", "Dan", "Elsa", "Flo", "Gus", "Hugo", "Ivy",
-                        "Jay" };
-        private static final String[] LAST_NAMES = { "Cole", "Fox", "Green", "Jones", "King", "Li", "Poe", "Rye",
-                        "Smith", "Watt" };
-        private static final int[] SERVICE_DURATION_MINUTES = { 10, 20, 35, 40 };
-        private static final LocalTime MORNING_WINDOW_START = LocalTime.of(8, 0);
-        private static final LocalTime MORNING_WINDOW_END = LocalTime.of(12, 0);
-        private static final LocalTime AFTERNOON_WINDOW_START = LocalTime.of(13, 0);
-        private static final LocalTime AFTERNOON_WINDOW_END = LocalTime.of(18, 0);
-
         public enum DemoData {
-                PHILADELPHIA(0, 55, 6, LocalTime.of(7, 30), 1, 50, 15, 30,
-                                new Location(39.7656099067391, -76.83782328143754, -2),
-                                new Location(40.77636644354855, -74.9300739430771, -3));
-
-                private long seed;
-                private int visitCount;
-                private int vehicleCount;
-                private LocalTime vehicleStartTime;
-                private int minDemand;
-                private int maxDemand;
-                private int minVehicleCapacity;
-                private int maxVehicleCapacity;
-                private Location southWestCorner;
-                private Location northEastCorner;
-
-                DemoData(long seed, int visitCount, int vehicleCount, LocalTime vehicleStartTime,
-                                int minDemand, int maxDemand, int minVehicleCapacity, int maxVehicleCapacity,
-                                Location southWestCorner, Location northEastCorner) {
-                        if (minDemand < 1) {
-                                throw new IllegalStateException(
-                                                "minDemand (%s) must be greater than zero.".formatted(minDemand));
-                        }
-
-                        if (maxDemand < 1) {
-                                throw new IllegalStateException(
-                                                "maxDemand (%s) must be greater than zero.".formatted(maxDemand));
-                        }
-                        if (minDemand >= maxDemand) {
-                                throw new IllegalStateException("maxDemand (%s) must be greater than minDemand (%s)."
-                                                .formatted(maxDemand, minDemand));
-                        }
-                        if (minVehicleCapacity < 1) {
-                                throw new IllegalStateException(
-                                                "Number of minVehicleCapacity (%s) must be greater than zero."
-                                                                .formatted(minVehicleCapacity));
-                        }
-                        if (maxVehicleCapacity < 1) {
-                                throw new IllegalStateException(
-                                                "Number of maxVehicleCapacity (%s) must be greater than zero."
-                                                                .formatted(maxVehicleCapacity));
-                        }
-                        if (minVehicleCapacity >= maxVehicleCapacity) {
-                                throw new IllegalStateException(
-                                                "maxVehicleCapacity (%s) must be greater than minVehicleCapacity (%s)."
-                                                                .formatted(maxVehicleCapacity, minVehicleCapacity));
-                        }
-                        if (visitCount < 1) {
-                                throw new IllegalStateException(
-                                                "Number of visitCount (%cs) must be greater than zero."
-                                                                .formatted(visitCount));
-                        }
-                        if (vehicleCount < 1) {
-                                throw new IllegalStateException(
-                                                "Number of vehicleCount (%s) must be greater than zero."
-                                                                .formatted(vehicleCount));
-                        }
-                        if (northEastCorner.getLatitude() <= southWestCorner.getLatitude()) {
-                                throw new IllegalStateException(
-                                                "northEastCorner.getLatitude (%s) must be greater than southWestCorner.getLatitude(%s)."
-                                                                .formatted(northEastCorner.getLatitude(),
-                                                                                southWestCorner.getLatitude()));
-                        }
-                        if (northEastCorner.getLongitude() <= southWestCorner.getLongitude()) {
-                                throw new IllegalStateException(
-                                                "northEastCorner.getLongitude (%s) must be greater than southWestCorner.getLongitude(%s)."
-                                                                .formatted(northEastCorner.getLongitude(),
-                                                                                southWestCorner.getLongitude()));
-                        }
-
-                        this.seed = seed;
-                        this.visitCount = visitCount;
-                        this.vehicleCount = vehicleCount;
-                        this.vehicleStartTime = vehicleStartTime;
-                        this.minDemand = minDemand;
-                        this.maxDemand = maxDemand;
-                        this.minVehicleCapacity = minVehicleCapacity;
-                        this.maxVehicleCapacity = maxVehicleCapacity;
-                        this.southWestCorner = southWestCorner;
-                        this.northEastCorner = northEastCorner;
-                }
+                Delhi;
+                                
         }
 
         @APIResponses(value = {

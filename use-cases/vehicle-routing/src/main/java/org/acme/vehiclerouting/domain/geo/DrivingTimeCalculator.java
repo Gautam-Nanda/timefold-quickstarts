@@ -1,5 +1,6 @@
 package org.acme.vehiclerouting.domain.geo;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -47,46 +48,47 @@ public interface DrivingTimeCalculator {
      * @param sheet3    driving time data as a List of Maps
      */
     default void initDrivingTimeMaps(Collection<Location> locations, List<Map<String, Object>> sheet3) {
-        // Parse the List of Maps to create the driving time matrix
-        Map<Integer, Map<Integer, Long>> timeMatrix = new HashMap<>();
-        for (Map<String, Object> entry : sheet3) {
-            int fromId = ((Number) entry.get("Time")).intValue();
-            Map<Integer, Long> row = new HashMap<>();
-            for (Map.Entry<String, Object> mapEntry : entry.entrySet()) {
-                String key = mapEntry.getKey();
-                if (!key.equals("Time")) {
-                    int toId = Integer.parseInt(key);
-                    long time = ((Number) mapEntry.getValue()).longValue();
-                    row.put(toId, time);
-                }
+    // Parse the List of Maps to create the driving time matrix
+    Map<Integer, Map<Integer, Long>> timeMatrix = new HashMap<>();
+    for (Map<String, Object> entry : sheet3) {
+        int fromId = ((Number) entry.get("Time")).intValue();
+        Map<Integer, Long> row = new HashMap<>();
+        for (Map.Entry<String, Object> mapEntry : entry.entrySet()) {
+            String key = mapEntry.getKey();
+            if (!key.equals("Time")) {
+                int toId = Integer.parseInt(key);
+                long time = ((Number) mapEntry.getValue()).longValue();
+                row.put(toId, time);
             }
-            timeMatrix.put(fromId, row);
         }
-
-        // Map locations by their ID for easier lookup, handling duplicates
-        Map<Integer, Location> locationById = new HashMap<>();
-        for (Location location : locations) {
-            int locationId = location.getLocationId();
-            if (locationById.containsKey(locationId)) {
-                System.out.println("Duplicate location ID found: " + locationId + ". Ignoring duplicate.");
-                continue; // Ignore duplicate location
-            }
-            locationById.put(locationId, location);
-        }
-
-        // Create the driving time matrix using the parsed data
-        Map<Location, Map<Location, Long>> drivingTimeMatrix = locationById.values().stream()
-                .collect(Collectors.toMap(
-                        Function.identity(),
-                        from -> locationById.values().stream()
-                                .collect(Collectors.toMap(
-                                        Function.identity(),
-                                        to -> timeMatrix.get(from.getLocationId()).get(to.getLocationId())))));
-
-        // Assigning the calculated driving time maps to each location
-        locationById.values().forEach(location -> location.setDrivingTimeSeconds(drivingTimeMatrix.get(location)));
-        // System.out.println(drivingTimeMatrix);
-
-        
+        timeMatrix.put(fromId, row);
     }
+
+    // Map locations by their ID for easier lookup, allowing duplicates
+    Map<Integer, List<Location>> locationById = new HashMap<>();
+    for (Location location : locations) {
+        int locationId = location.getLocationId();
+        if (!locationById.containsKey(locationId)) {
+            locationById.put(locationId, new ArrayList<>());
+        }
+        locationById.get(locationId).add(location);
+    }
+
+    // Create the driving time matrix using the parsed data
+    Map<Location, Map<Location, Long>> drivingTimeMatrix = locationById.values().stream()
+            .flatMap(List::stream)
+            .collect(Collectors.toMap(
+                    Function.identity(),
+                    from -> locationById.values().stream()
+                            .flatMap(List::stream)
+                            .collect(Collectors.toMap(
+                                    Function.identity(),
+                                    to -> timeMatrix.get(from.getLocationId()).get(to.getLocationId())))));
+    // System.out.println(drivingTimeMatrix);
+
+    // Assigning the calculated driving time maps to each location
+    locationById.values().stream()
+            .flatMap(List::stream)
+            .forEach(location -> location.setDrivingTimeSeconds(drivingTimeMatrix.get(location)));
+}
 }

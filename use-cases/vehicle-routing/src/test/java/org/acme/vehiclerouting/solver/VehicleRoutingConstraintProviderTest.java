@@ -28,9 +28,9 @@ class VehicleRoutingConstraintProviderTest {
      * LOCATION_2 to LOCATION_3 is approx. 8880 m ~639 seconds of driving time
      * LOCATION_1 to LOCATION_3 is approx. 13075 m ~941 seconds of driving time
      */
-    private static final Location LOCATION_1 = new Location(49.288087, 16.562172);
-    private static final Location LOCATION_2 = new Location(49.190922, 16.624466);
-    private static final Location LOCATION_3 = new Location(49.1767533245638, 16.50422914190477);
+    private static final Location LOCATION_1 = new Location(49.288087, 16.562172,0);
+    private static final Location LOCATION_2 = new Location(49.190922, 16.624466,0);
+    private static final Location LOCATION_3 = new Location(49.1767533245638, 16.50422914190477,0);
 
     private static final LocalDate TOMORROW = LocalDate.now().plusDays(1);
     @Inject
@@ -38,7 +38,7 @@ class VehicleRoutingConstraintProviderTest {
 
     @BeforeAll
     static void initDrivingTimeMaps() {
-        HaversineDrivingTimeCalculator.getInstance().initDrivingTimeMaps(Arrays.asList(LOCATION_1, LOCATION_2, LOCATION_3));
+        HaversineDrivingTimeCalculator.getInstance().initDrivingTimeMaps(Arrays.asList(LOCATION_1, LOCATION_2, LOCATION_3), null);
     }
 
     @Test

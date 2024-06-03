@@ -22,6 +22,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import org.acme.vehiclerouting.domain.geo.DrivingTimeCalculator;
+import org.acme.vehiclerouting.domain.geo.HaversineDrivingTimeCalculator;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -97,14 +99,8 @@ public class VehicleRoutePlan {
         List<Location> locations = Stream.concat(
                 vehicles.stream().map(Vehicle::getHomeLocation),
                 visits.stream().map(Visit::getLocation)).toList();
-                System.out.println(locations);
-        DrivingTimeCalculator drivingTimeCalculator = new DrivingTimeCalculator() {
-            @Override
-            public long calculateDrivingTime(Location from, Location to) {
-                // Implementation here
-                return 0;
-            }
-        };
+                // System.out.println(locations);
+        DrivingTimeCalculator drivingTimeCalculator = HaversineDrivingTimeCalculator.getInstance();
         drivingTimeCalculator.initDrivingTimeMaps(locations, sheet3);
     }
 

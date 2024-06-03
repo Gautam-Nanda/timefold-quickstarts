@@ -531,7 +531,7 @@ function solve() {
     scheduleId = data;
     refreshSolvingButtons(true);
   }).fail(function (xhr, ajaxOptions, thrownError) {
-    showError("Start solving failed.", xhr);
+    showError("Please provide input", xhr);
     refreshSolvingButtons(false);
   }, "text");
 }
@@ -576,9 +576,15 @@ function refreshRoutePlan() {
     renderTimelines(routePlan);
     initialized = true;
   }).fail(function (xhr, ajaxOptions, thrownError) {
-    showError("Getting timetable has failed.", xhr);
+    showError("Please provide necessary input");
     refreshSolvingButtons(false);
   });
+
+  // Modify showError function
+  function showError(message) {
+    // Display only the message, ignore xhr
+    alert(message);
+  }
 }
 
 function stopSolving() {
@@ -648,7 +654,6 @@ function copyTextToClipboard(id) {
   document.body.removeChild(dummy);
 }
 
-
 function replaceQuickstartTimefoldAutoHeaderFooter() {
   const timefoldHeader = $("header#timefold-auto-header");
   if (timefoldHeader != null) {
@@ -663,25 +668,9 @@ function replaceQuickstartTimefoldAutoHeaderFooter() {
             <span class="navbar-toggler-icon"></span>
           </button>
           <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="nav nav-pills">
-              <li class="nav-item active" id="navUIItem">
-                <button class="nav-link active" id="navUI" data-bs-toggle="pill" data-bs-target="#demo" type="button">Demo UI</button>
-              </li>
-              <li class="nav-item" id="navRestItem">
-                <button class="nav-link" id="navRest" data-bs-toggle="pill" data-bs-target="#rest" type="button">Guide</button>
-              </li>
-              <li class="nav-item" id="navOpenApiItem">
-                <button class="nav-link" id="navOpenApi" data-bs-toggle="pill" data-bs-target="#openapi" type="button">REST API</button>
-              </li>
-            </ul>
           </div>
           <div class="ms-auto">
-              <div class="btn-group dropstart">
-                  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                      Data
-                  </button>
-                  <div id="testDataButton" class="dropdown-menu" aria-labelledby="dropdownMenuButton"></div>
-              </div>
+              
           </div>
         </nav>
       </div>`)
@@ -691,19 +680,7 @@ function replaceQuickstartTimefoldAutoHeaderFooter() {
   const timefoldFooter = $("footer#timefold-auto-footer");
   if (timefoldFooter != null) {
     timefoldFooter.append(
-      $(`<footer class="bg-black text-white-50">
-               <div class="container">
-                 <div class="hstack gap-3 p-4">
-                   <div class="ms-auto"><a class="text-white" href="https://timefold.ai">Timefold</a></div>
-                   <div class="vr"></div>
-                   <div><a class="text-white" href="https://timefold.ai/docs">Documentation</a></div>
-                   <div class="vr"></div>
-                   <div><a class="text-white" href="https://github.com/TimefoldAI/timefold-quickstarts">Code</a></div>
-                   <div class="vr"></div>
-                   <div class="me-auto"><a class="text-white" href="https://timefold.ai/product/support/">Support</a></div>
-                 </div>
-               </div>
-             </footer>`)
+    
     );
   }
 }
